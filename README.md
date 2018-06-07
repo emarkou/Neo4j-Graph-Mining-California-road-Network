@@ -19,7 +19,7 @@ In the current dataset, the following files are provided:
 
 From the above structure, the following property graph was designed:
 
-![Property Data Model](images/PropertyDataModel.png)
+![Property Data Model](PropertyDataModel.png)
 
 - Crossroads are represented as nodes with label “Crossroad”, and have three properties: their unique identifier (i.e. NodeID), as well as their detailed coordinates (Longitude, Latitude).
 - Roads represent the existence of connection between two crossroads, hence they are depicted as relationships with type “Road”. They have three properties: their unique identifier (i.e. EdgeID), their length (i.e. Length), as well as the number of POIs that are located on them (i.e. NumPOI).
