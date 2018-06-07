@@ -26,4 +26,19 @@ From the above structure, the following property graph was designed:
 - POIs are represented by their category only as nodes with label “POI”, that have two properties: their unique id and name (i.e. CategoryID, CategoryName).
 - POIs are connected to the starting crossroad of the road they belong to via a relationship of type “Location”. These relationships have two properties: the id of the ending crossroad of the road they belong to (i.e. EndNodeID), as well as the distance from the starting crossroad (i.e. DistanceFromStartNode).
 
+## Data Transformation
+Each of the downloaded files was transformed in order to get a form suitable for importing into the Neo4j database. The details of the transformation follow.
+
+- Nodes & Edges: In the sections B & C of the script, both files were converted into CSV format with the addition of commas as delimiter and column headings.
+
+- Poi_n: In the section D, the category file is transformed so that it includes information about the correspondence between the unique category names and ids among all POIs. Again the CSV format was adopted and the corresponding headings for each column were added.
+
+- Poi_e & no_poi: The transformation of the poi_e is implemented in the section E of the script. The actions taken during this process include:
+  - Removal of edges that correspond to roads with no points of interest, since this information was redundant.  
+  - Each of the POIs was linked to the Start and End Node of the road it belongs to, so that each line of the file corresponds to a single point of interest. 
+  - The last step includes addition of the corresponding headings (startnode, endnode, categoryid, distancefromstart) and CSV formatting.
+  
+During the poi_e construction another file, namely no_poi, was also produced which includes the number of points between each start and end node along with the information about the road length (Section F).
+
+
 
