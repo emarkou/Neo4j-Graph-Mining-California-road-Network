@@ -40,5 +40,57 @@ Each of the downloaded files was transformed in order to get a form suitable for
   
 During the poi_e construction another file, namely no_poi, was also produced which includes the number of points between each start and end node along with the information about the road length (Section F).
 
+## Data Loading 
 
+Upon completion of the data preprocessing phase, the produced CSV files were imported into the Neo4j database using the commands that are listed below.
 
+### Creation of nodes with label Crossroad
+The following code was used to create the nodes that represent the crossroads from the “nodes.csv” file. Furthermore, a unique constraint was added on the “NodeID” attribute, in order to ensure both existence and uniqueness of this property in each node. 
+
+```cycript
+LOAD CSV WITH HEADERS FROM "file:///nodes.csv" AS node WITH node
+CREATE (p:Crossroad { NodeID: toInt(node.NodeID), Longitude: toFloat(node.Longitude), Latitude: toFloat(node.Latitude) });
+CREATE CONSTRAINT ON (p:Crossroad) ASSERT p.NodeID IS UNIQUE;
+```
+### Creation of edges with type Road
+
+For the creation of the relationships that represent the roads of the network, information from the “edges.csv” file was imported. It should be noted that property “NumPOI” is also initialized to zero since it will be further updated during the next step. For efficiency in query execution performance a periodic commit was implemented.
+
+```cycript
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS FROM "file:///edges.csv" AS road
+MATCH (startnode:Crossroad { NodeID: toInt(road.startnodeid)})
+MATCH (endnode:Crossroad { NodeID: toInt(road.endnodeid)})
+CREATE (startnode)-[:Road { EdgeID: toInt(road.edgeid), Length: toFloat(road.l2distance), NumPOI: 0 }]->(endnode);
+```
+
+As mentioned above, the property  “NumPOI” was further updated with the use of the “no_poi.csv” file and the following code:
+
+```cycript
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS FROM "file:///no_poi.csv" AS road
+MATCH (startnode:Crossroad { NodeID: toInt(road.startnode)}) -[r:Road] -> (endnode:Crossroad { NodeID: toInt(road.endnode)})
+SET r.NumPOI = toInt(road.nopoi);
+```
+### Creation of nodes with label POI
+
+The poi_n.csv file was imported in order to create this group on nodes. In addition, unique constraints on both Category Name and Category ID properties were added. 
+
+```cycript
+LOAD CSV WITH HEADERS FROM "file:///poi_n.csv" AS poi WITH poi
+CREATE (p:POI { CategoryID: toInt(poi.categoryid), CategoryName:(poi.categoryname) });
+
+CREATE CONSTRAINT ON (p:POI) ASSERT p.CategoryName IS UNIQUE;
+CREATE CONSTRAINT ON (p:POI) ASSERT p.CategoryID IS UNIQUE;
+```
+### Creation of edges with type Location
+
+The following code was used to create the edges with type “Location” from the “poi_e.csv” file. For efficiency in query execution performance a periodic commit was implemented.
+
+```cycript
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS FROM "file:///poi_e.csv" AS loc
+MATCH (node_C:Crossroad { NodeID: toInt(loc.startnode)})
+MATCH (node_P:POI { CategoryID: toInt(loc.categoryid)})
+CREATE (node_C)-[:Location { EndNodeID: toInt(loc.endnode), DistanceFromStartNode: toFloat(loc.distancefromstart) }]->(node_P);
+```
